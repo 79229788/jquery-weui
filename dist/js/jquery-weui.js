@@ -3476,58 +3476,59 @@ if (typeof define === 'function' && define.amd) {
 + function($) {
   "use strict";
 
-  var defaults;
+  var indexId = 1;
   
-  var show = function(html, className) {
+  var show = function(html, className, id, mask) {
     className = className || "";
-    var mask = $("<div class='weui-mask_transparent'></div>").appendTo(document.body);
+    hide();
+    var maskId = id ? ('weui-toast-mask-' + id) : '';
+    var toastId = id ? ('weui-toast-' + id) : '';
+    if(mask) $("<div class='weui-mask_transparent weui-toast-mask' id='"+ maskId +"'></div>").appendTo(document.body);
 
-    var tpl = '<div class="weui-toast ' + className + '">' + html + '</div>';
+    var tpl = '<div class="weui-toast ' + className + '" id="'+ toastId +'">' + html + '</div>';
     var dialog = $(tpl).appendTo(document.body);
 
-    dialog.addClass("weui-toast--visible");
     dialog.show();
+    dialog.addClass("weui-toast--visible");
   };
 
-  var hide = function(callback) {
-    $(".weui-mask_transparent").remove();
-    var done = false;
-    var $el = $(".weui-toast--visible").removeClass("weui-toast--visible").transitionEnd(function() {
+  var hide = function(id, callback) {
+    var maskId = id ? ('#weui-toast-mask-' + id) : '';
+    var toastId = id ? ('#weui-toast-' + id) : '';
+    $(maskId || ".weui-mask_transparent").remove();
+    $(toastId || ".weui-toast--visible").removeClass("weui-toast--visible").transitionEnd(function() {
       var $this = $(this);
       $this.remove();
-      callback && callback();
-      done = true
+      callback && callback($this);
     });
-
-    setTimeout(function () {
-      if (!done) {
-        $el.remove()
-        callback && callback();
-      }
-    }, 1000)
   }
 
   $.toast = function(text, style, callback) {
+    var duration = 2500;
     if(typeof style === "function") {
       callback = style;
     }
+    if(typeof style === "number") {
+      duration = style;
+      style = "text";
+    }
+    var id = indexId++;
     var className, iconClassName = 'weui-icon-success-no-circle';
-    var duration = toastDefaults.duration;
-    if(style == "cancel") {
+    var mask = true;
+    if(style === "cancel") {
       className = "weui-toast_cancel";
       iconClassName = 'weui-icon-cancel'
-    } else if(style == "forbidden") {
+    } else if(style === "forbidden") {
       className = "weui-toast--forbidden";
       iconClassName = 'weui-icon-warn'
-    } else if(style == "text") {
+    } else if(!style || style === "text") {
       className = "weui-toast--text";
-    } else if(typeof style === typeof 1) {
-      duration = style
+      mask = false;
     }
-    show('<i class="' + iconClassName + ' weui-icon_toast"></i><p class="weui-toast_content">' + (text || "已经完成") + '</p>', className);
+    show('<i class="' + iconClassName + ' weui-icon_toast"></i><p class="weui-toast_content">' + (text || "已经完成") + '</p>', className, id, mask);
 
     setTimeout(function() {
-      hide(callback);
+      hide(id, callback);
     }, duration);
   }
 
@@ -3536,16 +3537,14 @@ if (typeof define === 'function' && define.amd) {
     html += '<i class="weui-loading weui-icon_toast"></i>';
     html += '</div>';
     html += '<p class="weui-toast_content">' + (text || "数据加载中") + '</p>';
-    show(html, 'weui_loading_toast');
+    hide();
+    show(html, 'weui_loading_toast', null, true);
   }
 
   $.hideLoading = function() {
     hide();
   }
 
-  var toastDefaults = $.toast.prototype.defaults = {
-    duration: 2500
-  }
 
 }($);
 
@@ -4015,11 +4014,12 @@ Device/OS Detection
           toolbar: true,
           toolbarCloseText: '完成',
           title: '请选择',
-          toolbarTemplate: '<div class="toolbar">\
-          <div class="toolbar-inner">\
-          <a href="javascript:;" class="picker-button close-picker">{{closeText}}</a>\
-          <h1 class="title">{{title}}</h1>\
-          </div>\
+          toolbarTemplate: '\
+          <div class="toolbar">\
+            <div class="toolbar-inner">\
+                <a href="javascript:;" class="picker-button close-picker">{{closeText}}</a>\
+                <h1 class="title">{{title}}</h1>\
+            </div>\
           </div>',
       };
       params = params || {};
@@ -4473,7 +4473,7 @@ Device/OS Detection
               if (e.target !== p.input[0] && $(e.target).parents('.weui-picker-modal').length === 0) p.close();
           }
           else {
-              if ($(e.target).parents('.weui-picker-modal').length === 0) p.close();   
+              if ($(e.target).parents('.weui-picker-modal').length === 0) p.close();
           }
       }
 
@@ -4492,7 +4492,7 @@ Device/OS Detection
           }
               
       }
-      
+
       if (!p.inline) $('html').on('click', closeOnHTMLClick);
 
       // Open
@@ -4619,7 +4619,7 @@ Device/OS Detection
 
     $.closePicker();
 
-    var container = $("<div class='weui-picker-container "+ (className || "") + "'></div>").appendTo(document.body);
+    var container = $("<div class='weui-picker-container "+ (className || "") + "'><div class='weui-mask'></div></div>").appendTo(document.body);
     container.show();
 
     container.addClass("weui-picker-container-visible");
@@ -4630,6 +4630,7 @@ Device/OS Detection
     dialog.width(); //通过取一次CSS值，强制浏览器不能把上下两行代码合并执行，因为合并之后会导致无法出现动画。
 
     dialog.addClass("weui-picker-modal-visible");
+    container.find('.weui-mask').addClass("weui-mask--visible");
 
     callback && container.on("close", callback);
 
@@ -4651,6 +4652,7 @@ Device/OS Detection
 
   $.closePicker = function(container, callback) {
     if(typeof container === "function") callback = container;
+    $(".weui-mask--visible").removeClass("weui-mask--visible");
     $(".weui-picker-modal-visible").removeClass("weui-picker-modal-visible").transitionEnd(function() {
       $(this).parent().remove();
       callback && callback();
