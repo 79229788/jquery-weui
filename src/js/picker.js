@@ -20,11 +20,12 @@
           toolbar: true,
           toolbarCloseText: '完成',
           title: '请选择',
-          toolbarTemplate: '<div class="toolbar">\
-          <div class="toolbar-inner">\
-          <a href="javascript:;" class="picker-button close-picker">{{closeText}}</a>\
-          <h1 class="title">{{title}}</h1>\
-          </div>\
+          toolbarTemplate: '\
+          <div class="toolbar">\
+            <div class="toolbar-inner">\
+                <a href="javascript:;" class="picker-button close-picker">{{closeText}}</a>\
+                <h1 class="title">{{title}}</h1>\
+            </div>\
           </div>',
       };
       params = params || {};
@@ -478,7 +479,7 @@
               if (e.target !== p.input[0] && $(e.target).parents('.weui-picker-modal').length === 0) p.close();
           }
           else {
-              if ($(e.target).parents('.weui-picker-modal').length === 0) p.close();   
+              if ($(e.target).parents('.weui-picker-modal').length === 0) p.close();
           }
       }
 
@@ -497,7 +498,7 @@
           }
               
       }
-      
+
       if (!p.inline) $('html').on('click', closeOnHTMLClick);
 
       // Open
@@ -624,7 +625,7 @@
 
     $.closePicker();
 
-    var container = $("<div class='weui-picker-container "+ (className || "") + "'></div>").appendTo(document.body);
+    var container = $("<div class='weui-picker-container "+ (className || "") + "'><div class='weui-mask'></div></div>").appendTo(document.body);
     container.show();
 
     container.addClass("weui-picker-container-visible");
@@ -635,6 +636,7 @@
     dialog.width(); //通过取一次CSS值，强制浏览器不能把上下两行代码合并执行，因为合并之后会导致无法出现动画。
 
     dialog.addClass("weui-picker-modal-visible");
+    container.find('.weui-mask').addClass("weui-mask--visible");
 
     callback && container.on("close", callback);
 
@@ -656,6 +658,7 @@
 
   $.closePicker = function(container, callback) {
     if(typeof container === "function") callback = container;
+    $(".weui-mask--visible").removeClass("weui-mask--visible");
     $(".weui-picker-modal-visible").removeClass("weui-picker-modal-visible").transitionEnd(function() {
       $(this).parent().remove();
       callback && callback();
